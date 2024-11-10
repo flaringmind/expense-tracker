@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Entity\Category;
 use App\Entity\User;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\Tools\Pagination\Paginator;
 
 class CategoryService
 {
@@ -16,18 +17,18 @@ class CategoryService
     {
         $category = new Category();
 
-        $category->setName($name);
         $category->setUser($user);
 
-        $this->entityManager->persist($category);
-        $this->entityManager->flush();
-
-        return $category;
+        return $this->update($category, $name);
     }
 
-    public function getAll(): array
+    public function getPaginatedCategories(int $start, int $length): Paginator
     {
-        return $this->entityManager->getRepository(Category::class)->findAll();
+        $query = $this->entityManager->getRepository(Category::class)
+            ->createQueryBuilder('c')
+            ->setFirstResult($start)
+            ->setMaxResults($length);
+        return new Paginator($query);
     }
 
     public function delete(int $id): void
@@ -41,4 +42,14 @@ class CategoryService
     {
         return $this->entityManager->find(Category::class, $id);
     }
+
+    public function update(Category $category, string $name): Category
+    {
+        $category->setName($name);
+
+        $this->entityManager->persist($category);
+        $this->entityManager->flush();
+        return $category;
+    }
+
 }
