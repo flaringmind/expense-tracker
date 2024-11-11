@@ -4,7 +4,7 @@ declare(strict_types = 1);
 
 namespace App\Controllers;
 
-
+use App\Contracts\EntityManagerServiceInterface;
 use App\Contracts\RequestValidatorFactoryInterface;
 use App\RequestValidators\UploadReceiptRequestValidator;
 use App\Services\ReceiptService;
@@ -21,9 +21,9 @@ class ReceiptController
         private readonly Filesystem $filesystem,
         private readonly RequestValidatorFactoryInterface $requestValidatorFactory,
         private readonly ReceiptService $receiptService,
-        private readonly TransactionService $transactionService
-    )
-    {
+        private readonly TransactionService $transactionService,
+        private readonly EntityManagerServiceInterface $entityManagerService
+    ) {
     }
 
     public function store(Request $request, Response $response, array $args): Response
@@ -39,12 +39,14 @@ class ReceiptController
         if (! $id || ! ($transaction = $this->transactionService->getById($id))) {
             return $response->withStatus(404);
         }
+
         $randomFilename = bin2hex(random_bytes(25));
 
         $this->filesystem->write('receipts/' . $randomFilename, $file->getStream()->getContents());
 
-        $this->receiptService->create($transaction, $filename, $randomFilename, $file->getClientMediaType());
-        $this->receiptService->flush();
+        $receipt = $this->receiptService->create($transaction, $filename, $randomFilename, $file->getClientMediaType());
+
+        $this->entityManagerService->sync($receipt);
 
         return $response;
     }
@@ -52,9 +54,9 @@ class ReceiptController
     public function download(Request $request, Response $response, array $args): Response
     {
         $transactionId = (int) $args['transactionId'];
-        $receiptId = (int) $args['id'];
+        $receiptId     = (int) $args['id'];
 
-        if (! $transactionId || ! ($this->transactionService->getById($transactionId))) {
+        if (! $transactionId || ! $this->transactionService->getById($transactionId)) {
             return $response->withStatus(404);
         }
 
@@ -68,10 +70,8 @@ class ReceiptController
 
         $file = $this->filesystem->readStream('receipts/' . $receipt->getStorageFilename());
 
-        $response = $response->withHeader(
-            'Content-Disposition',
-            'inline; filename="' . $receipt->getFilename() . '"'
-        )->withHeader('Content-Type', $receipt->getMediaType());
+        $response = $response->withHeader('Content-Disposition', 'inline; filename="' . $receipt->getFilename() . '"')
+            ->withHeader('Content-Type', $receipt->getMediaType());
 
         return $response->withBody(new Stream($file));
     }
@@ -95,8 +95,8 @@ class ReceiptController
 
         $this->filesystem->delete('receipts/' . $receipt->getStorageFilename());
 
-        $this->receiptService->delete($receipt);
-        $this->receiptService->flush();
+        $this->entityManagerService->delete($receipt, true);
+
         return $response;
     }
 }
