@@ -6,12 +6,13 @@ use App\Contracts\RequestValidatorInterface;
 use App\Entity\User;
 use App\Exception\ValidationException;
 use Doctrine\ORM\EntityManager;
+use Doctrine\ORM\EntityManagerInterface;
 use Valitron\Validator;
 
 class RegisterUserRequestValidator implements RequestValidatorInterface
 {
 
-    public function __construct(private readonly EntityManager $entityManager)
+    public function __construct(private readonly EntityManagerInterface $entityManager)
     {
     }
 
