@@ -6,13 +6,13 @@ namespace App\Contracts;
 
 use App\DataObjects\RegisterUserData;
 use App\Entity\User;
+use App\Enum\AuthAttemptStatus;
 
 interface AuthInterface
 {
     public function user(): ?UserInterface;
 
-    public function attemptLogin(array $credentials): bool;
-
+    public function attemptLogin(array $credentials): AuthAttemptStatus;
     public function checkCredentials(UserInterface $user, array $credentials): bool;
 
     public function logOut(): void;
@@ -20,4 +20,6 @@ interface AuthInterface
     public function register(RegisterUserData $data): UserInterface;
 
     public function logIn(UserInterface $user): void;
+
+    public function attemptTwoFactorLogin(array $data): bool;
 }

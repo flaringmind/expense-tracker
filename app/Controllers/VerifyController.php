@@ -6,7 +6,7 @@ namespace App\Controllers;
 
 use App\Contracts\UserProviderServiceInterface;
 use App\Entity\User;
-use App\Mail\SignupEmail;
+use App\Mail\TwoFactorAuthEmail;
 use Psr\Http\Message\ResponseInterface;
 use Psr\Http\Message\ServerRequestInterface;
 use Slim\Views\Twig;
@@ -16,7 +16,7 @@ class VerifyController
     public function __construct(
         private readonly Twig $twig,
         private readonly UserProviderServiceInterface $userProviderService,
-        private readonly SignupEmail $signupEmail
+        private readonly TwoFactorAuthEmail $signupEmail
     ) {
     }
 
