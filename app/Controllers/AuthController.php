@@ -23,12 +23,12 @@ class AuthController
     ) {
     }
 
-    public function loginView(Request $request, Response $response): Response
+    public function loginView(Response $response): Response
     {
         return $this->twig->render($response, 'auth/login.twig');
     }
 
-    public function registerView(Request $request, Response $response): Response
+    public function registerView(Response $response): Response
     {
         return $this->twig->render($response, 'auth/register.twig');
     }
@@ -52,14 +52,14 @@ class AuthController
             $request->getParsedBody()
         );
 
-        if(! $this->auth->attemptLogin($data)) {
+        if (! $this->auth->attemptLogin($data)) {
             throw new ValidationException(['password' => ['You have entered an invalid username or password']]);
         }
 
         return $response->withHeader('Location', '/')->withStatus(302);
     }
 
-    public function logOut(Request $request, Response $response): Response
+    public function logOut(Response $response): Response
     {
         $this->auth->logOut();
 

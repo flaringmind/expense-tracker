@@ -18,4 +18,6 @@ interface EntityManagerServiceInterface
 
     public function clear(?string $entityName = null): void;
 
+    public function enableUserAuthFilter(int $userId): void;
+
 }
