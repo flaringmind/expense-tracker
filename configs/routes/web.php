@@ -11,9 +11,12 @@ use App\Controllers\TransactionImporterController;
 use App\Controllers\VerifyController;
 use App\Middleware\AuthMiddleware;
 use App\Middleware\GuestMiddleware;
+use App\Middleware\ValidateSignatureMiddleware;
 use App\Middleware\VerifyEmailMiddleware;
 use Slim\App;
 use Slim\Routing\RouteCollectorProxy;
+use App\Controllers\PasswordResetController;
+use App\Controllers\ProfileController;
 
 return function (App $app) {
     $app->group('', function(RouteCollectorProxy $group) {
@@ -47,6 +50,12 @@ return function (App $app) {
             );
             $transactions->post('/{transaction}/review', [TransactionController::class, 'toggleReviewed']);
         });
+
+        $group->group('/profile', function(RouteCollectorProxy $profile) {
+            $profile->get('', [ProfileController::class, 'index']);
+            $profile->post('', [ProfileController::class, 'update']);
+            $profile->post('/update-password', [ProfileController::class, 'updatePassword']);
+        });
     })->add(VerifyEmailMiddleware::class)->add(AuthMiddleware::class);
 
     $app->group('', function(RouteCollectorProxy $group) {
@@ -54,7 +63,7 @@ return function (App $app) {
         $group->get('/verify', [VerifyController::class, 'index']);
         $group->get('/verify/{id}/{hash}', [VerifyController::class, 'verify'])
             ->setName('verify')
-            ->add(\App\Middleware\ValidateSignatureMiddleware::class);
+            ->add(ValidateSignatureMiddleware::class);
         $group->post('/verify', [VerifyController::class, 'resend']);
     })->add(AuthMiddleware::class);
 
@@ -64,5 +73,11 @@ return function (App $app) {
         $guest->post('/login', [AuthController::class, 'logIn']);
         $guest->post('/register', [AuthController::class, 'register']);
         $guest->post('/login/two-factor', [AuthController::class, 'twoFactorLogin']);
+        $guest->get('/forgot-password', [PasswordResetController::class, 'showForgotPasswordForm']);
+        $guest->get('/reset-password/{token}', [PasswordResetController::class, 'showResetPasswordForm'])
+            ->setName('password-reset')
+            ->add(ValidateSignatureMiddleware::class);
+        $guest->post('/forgot-password', [PasswordResetController::class, 'handleForgotPasswordRequest']);
+        $guest->post('/reset-password/{token}', [PasswordResetController::class, 'resetPassword']);
     })->add(GuestMiddleware::class);
 };

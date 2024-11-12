@@ -1,22 +1,23 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\RequestValidators;
 
 use App\Contracts\RequestValidatorInterface;
-use App\Entity\User;
 use App\Exception\ValidationException;
-use Doctrine\ORM\EntityManager;
 use Valitron\Validator;
 
-class CreateCategoryRequestValidator implements RequestValidatorInterface
+class UpdateProfileRequestValidator implements RequestValidatorInterface
 {
     public function validate(array $data): array
     {
         $v = new Validator($data);
-        $v->rule('required', 'name')->message('Required field');
-        $v->rule('lengthMax', 50);
 
-        if(! $v->validate()) {
+        $v->rule('required', 'name')->message('Required field');
+        $v->rule('integer', 'twoFactor')->message('Invalid Two-Factor indicator');
+
+        if (! $v->validate()) {
             throw new ValidationException($v->errors());
         }
 

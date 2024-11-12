@@ -1,6 +1,6 @@
 <?php
 
-declare(strict_types=1);
+declare(strict_types = 1);
 
 namespace App\Entity;
 
@@ -23,7 +23,7 @@ class User implements UserInterface
 {
     use HasTimestamps;
 
-    #[Id, Column (options: ['unsigned' => true]), GeneratedValue]
+    #[Id, Column(options: ['unsigned' => true]), GeneratedValue]
     private int $id;
 
     #[Column]
@@ -35,19 +35,23 @@ class User implements UserInterface
     #[Column]
     private string $password;
 
+    #[Column(name: 'two_factor', options: ['default' => false])]
+    private bool $twoFactor;
+
     #[Column(name: 'verified_at', nullable: true)]
     private ?\DateTime $verifiedAt;
-
-    #[OneToMany(mappedBy: 'user', targetEntity: Transaction::class)]
-    private Collection $transactions;
 
     #[OneToMany(mappedBy: 'user', targetEntity: Category::class)]
     private Collection $categories;
 
+    #[OneToMany(mappedBy: 'user', targetEntity: Transaction::class)]
+    private Collection $transactions;
+
     public function __construct()
     {
+        $this->categories   = new ArrayCollection();
         $this->transactions = new ArrayCollection();
-        $this->categories = new ArrayCollection();
+        $this->twoFactor    = false;
     }
 
     public function getId(): int
@@ -63,6 +67,7 @@ class User implements UserInterface
     public function setName(string $name): User
     {
         $this->name = $name;
+
         return $this;
     }
 
@@ -74,6 +79,7 @@ class User implements UserInterface
     public function setEmail(string $email): User
     {
         $this->email = $email;
+
         return $this;
     }
 
@@ -85,33 +91,11 @@ class User implements UserInterface
     public function setPassword(string $password): User
     {
         $this->password = $password;
+
         return $this;
     }
 
-    public function setCreatedAt(\DateTime $createdAt): User
-    {
-        $this->createdAt = $createdAt;
-        return $this;
-    }
-
-    public function setUpdatedAt(\DateTime $updatedAt): User
-    {
-        $this->updatedAt = $updatedAt;
-        return $this;
-    }
-
-    public function getTransactions(): Collection
-    {
-        return $this->transactions;
-    }
-
-    public function addTransaction(Transaction $transaction): User
-    {
-        $this->transactions->add($transaction);
-        return $this;
-    }
-
-    public function getCategories(): Collection
+    public function getCategories(): ArrayCollection|Collection
     {
         return $this->categories;
     }
@@ -119,6 +103,19 @@ class User implements UserInterface
     public function addCategory(Category $category): User
     {
         $this->categories->add($category);
+
+        return $this;
+    }
+
+    public function getTransactions(): ArrayCollection|Collection
+    {
+        return $this->transactions;
+    }
+
+    public function addTransaction(Transaction $transaction): User
+    {
+        $this->transactions->add($transaction);
+
         return $this;
     }
 
@@ -135,13 +132,19 @@ class User implements UserInterface
     public function setVerifiedAt(\DateTime $verifiedAt): static
     {
         $this->verifiedAt = $verifiedAt;
+
         return $this;
     }
 
     public function hasTwoFactorAuthEnabled(): bool
     {
-        // TODO:
+        return $this->twoFactor;
+    }
 
-        return true;
+    public function setTwoFactor(bool $twoFactor): User
+    {
+        $this->twoFactor = $twoFactor;
+
+        return $this;
     }
 }

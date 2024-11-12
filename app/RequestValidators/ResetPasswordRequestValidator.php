@@ -1,22 +1,23 @@
 <?php
 
+declare(strict_types = 1);
+
 namespace App\RequestValidators;
 
 use App\Contracts\RequestValidatorInterface;
-use App\Entity\User;
 use App\Exception\ValidationException;
-use Doctrine\ORM\EntityManager;
 use Valitron\Validator;
 
-class CreateCategoryRequestValidator implements RequestValidatorInterface
+class ResetPasswordRequestValidator implements RequestValidatorInterface
 {
     public function validate(array $data): array
     {
         $v = new Validator($data);
-        $v->rule('required', 'name')->message('Required field');
-        $v->rule('lengthMax', 50);
 
-        if(! $v->validate()) {
+        $v->rule('required', ['password', 'confirmPassword'])->message('Required field');
+        $v->rule('equals', 'confirmPassword', 'password')->label('Confirm Password');
+
+        if (! $v->validate()) {
             throw new ValidationException($v->errors());
         }
 
