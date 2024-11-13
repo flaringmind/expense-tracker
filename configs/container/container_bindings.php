@@ -26,6 +26,9 @@ use Doctrine\DBAL\DriverManager;
 use Doctrine\ORM\EntityManager;
 use Doctrine\ORM\EntityManagerInterface;
 use Doctrine\ORM\ORMSetup;
+use DoctrineExtensions\Query\Mysql\DateFormat;
+use DoctrineExtensions\Query\Mysql\Month;
+use DoctrineExtensions\Query\Mysql\Year;
 use League\Flysystem\Filesystem;
 use Psr\Container\ContainerInterface;
 use Psr\Http\Message\ResponseFactoryInterface;
@@ -87,6 +90,18 @@ return [
 
         $ormConfig->addFilter('user', UserFilter::class);
 
+        if (class_exists('DoctrineExtensions\Query\Mysql\Year')) {
+            $ormConfig->addCustomDatetimeFunction('YEAR', Year::class);
+        }
+
+        if (class_exists('DoctrineExtensions\Query\Mysql\Month')) {
+            $ormConfig->addCustomDatetimeFunction('MONTH', Month::class);
+        }
+
+        if (class_exists('DoctrineExtensions\Query\Mysql\DateFormat')) {
+            $ormConfig->addCustomStringFunction('DATE_FORMAT', DateFormat::class);
+        }
+
         return new EntityManager(
             DriverManager::getConnection($config->get('doctrine.connection'), $ormConfig),
             $ormConfig
@@ -135,8 +150,29 @@ return [
         $responseFactory, failureHandler: $csrf->failureHandler(), persistentTokenMode: true
     ),
     Filesystem::class => function(Config $config) {
+
+        $digitalOcean = function (array $options) {
+            $client = new Aws\S3\S3Client(
+                [
+                    'credentials' => [
+                        'key'    => $options['key'],
+                        'secret' => $options['secret'],
+                    ],
+                    'region'      => $options['region'],
+                    'version'     => $options['version'],
+                    'endpoint'    => $options['endpoint'],
+                ]
+            );
+
+            return new League\Flysystem\AwsS3V3\AwsS3V3Adapter(
+                $client,
+                $options['bucket']
+            );
+        };
+
         $adapter = match($config->get('storage.driver')) {
             StorageDriver::Local => new League\Flysystem\Local\LocalFilesystemAdapter(STORAGE_PATH),
+            StorageDriver::Remote_DO => $digitalOcean($config->get('storage.s3'))
         };
         return new League\Flysystem\Filesystem($adapter);
     },
