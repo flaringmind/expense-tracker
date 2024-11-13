@@ -9,10 +9,14 @@ use App\DataObjects\DataTableQueryParams;
 use App\Entity\Category;
 use App\Entity\User;
 use Doctrine\ORM\Tools\Pagination\Paginator;
+use Psr\SimpleCache\CacheInterface;
 
 class CategoryService
 {
-    public function __construct(private readonly EntityManagerServiceInterface $entityManager)
+    public function __construct(
+        private readonly EntityManagerServiceInterface $entityManager,
+        private readonly CacheInterface $cache
+    )
     {
     }
 

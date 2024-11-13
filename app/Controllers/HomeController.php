@@ -5,11 +5,12 @@ declare(strict_types = 1);
 namespace App\Controllers;
 
 use Psr\Http\Message\ResponseInterface as Response;
+use Psr\SimpleCache\CacheInterface;
 use Slim\Views\Twig;
 
 class HomeController
 {
-    public function __construct(private readonly Twig $twig)
+    public function __construct(private readonly Twig $twig, private readonly CacheInterface $cache)
     {
     }
 
